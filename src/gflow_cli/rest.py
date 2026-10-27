@@ -18,6 +18,7 @@ import binascii
 import hashlib
 import hmac
 import ipaddress
+import os
 import re
 import socket
 import time
@@ -302,18 +303,23 @@ def _task_view(task_id: str, base: str) -> dict[str, Any]:
     return view
 
 
+def _public_base(request: Request) -> str:
+    # Behind a private address (models-gateway), output URLs must name the public host.
+    return os.environ.get("GFLOW_CLI_PUBLIC_URL") or str(request.base_url)
+
+
 async def create_task(request: Request) -> Response:
     reply = await _submit(await request.json(), wait=False)
-    return JSONResponse(_task_view(reply["task_id"], str(request.base_url)), status_code=202)
+    return JSONResponse(_task_view(reply["task_id"], _public_base(request)), status_code=202)
 
 
 async def get_task(request: Request) -> Response:
-    return JSONResponse(_task_view(request.path_params["task_id"], str(request.base_url)))
+    return JSONResponse(_task_view(request.path_params["task_id"], _public_base(request)))
 
 
 async def get_content(request: Request) -> Response:
     task_id = request.path_params["task_id"]
-    view = _task_view(task_id, str(request.base_url))
+    view = _task_view(task_id, _public_base(request))
     if view["status"] != "completed":
         raise ApiError(409, f"task is {view['status']}", "task_not_completed")
     db_path = get_settings().resolved_db_path()

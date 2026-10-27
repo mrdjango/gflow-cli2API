@@ -145,3 +145,13 @@ async def test_veo_never_pins_a_duration(api: httpx.AsyncClient, wired: dict[str
     assert created.status_code == 202, created.text
     await _finish(created.json()["id"])
     assert wired["client"].generate_video.call_args.kwargs["req"].duration is None
+
+
+async def test_output_urls_use_the_public_url(
+    api: httpx.AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("GFLOW_CLI_PUBLIC_URL", "https://flow-media.example")
+    created = (await api.post("/v1/tasks", json={"model": "nano-banana-2", "prompt": "a"})).json()
+    await _finish(created["id"])
+    url = (await api.get(f"/v1/tasks/{created['id']}")).json()["outputs"][0]["url"]
+    assert url.startswith(f"https://flow-media.example/v1/tasks/{created['id']}/content/0?")

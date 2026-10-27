@@ -26,13 +26,15 @@ every generation with 403.
 | `POST /v1/images/generations` | OpenAI Images API: waits, answers `b64_json` (image models only) |
 
 `POST /v1/tasks` body: `model`, `prompt`, and optionally `size` (`WxH`, mapped to the nearest
-aspect) or `aspect_ratio`, `n` (1-4), `seconds` (4/6/8/10, video), `resolution` (omni-flash),
+aspect) or `aspect_ratio`, `n` (1-4), `seconds` (Veo: 8 only; omni-flash: 4/6/8/10), `resolution` (omni-flash),
 `image` / `images` (HTTPS URLs or base64 data URIs). For video, one or two images are the first
 and last frame; `"mode": "reference"` makes them reference images instead. Image URLs that
 resolve to a private address are refused.
 
 Output URLs are absolute and signed (valid 24 hours), so they work without the bearer header;
-they are built from the request's host, so put gflow behind the host name clients should see.
+they use `GFLOW_CLI_PUBLIC_URL` when set (else the request's host). models-gateway refuses to
+fetch private addresses, so video content needs a public HTTPS host that forwards only
+`/v1/tasks/*/content*` to gflow.
 A task that failed after Flow may have spent a credit reports `error.code: "indeterminate"` and
 is never retried by gflow.
 
