@@ -9,6 +9,9 @@
 
 const VIDEO_MODELS = ["veo-3.1-fast", "veo-3.1-quality", "veo-3.1-lite", "veo-3.1-lite-lower-priority", "omni-flash"];
 const IMAGE_MODELS = ["nano-banana-2", "nano-banana-2-lite", "nano-banana-pro", "imagen-4"];
+// Public names other task plugins also declare (shared models): the gateway picks the
+// provider by channel priority. They run as the gflow model of the same name.
+const SHARED_MODELS = ["nano-banana-2", "nano-banana-pro"];
 // Flow shows a duration control only for Omni Flash; Veo always makes 8-second clips.
 const OMNI_SECONDS = [4, 6, 8, 10];
 const MAX_IMAGES = 4;
@@ -30,20 +33,20 @@ export const meta = {
     en: "Veo video and Nano Banana / Imagen images through a gflow serve daemon",
     zh: "通过 gflow serve 守护进程使用 Veo 视频与 Nano Banana / Imagen 图片",
   },
-  version: "1.0.1",
+  version: "1.0.2",
   author: { name: "TensorGrid" },
   website: "https://github.com/mrdjango/gflow-cli2API",
-  models: declared(VIDEO_MODELS).concat(declared(IMAGE_MODELS)),
+  models: declared(VIDEO_MODELS).concat(declared(IMAGE_MODELS), SHARED_MODELS),
   fetchMode: "per_task",
   usageSchema: VIDEO_SCHEMA,
   usageExamples: [{ label: "8s", facts: { seconds: 8 } }],
   usageProfiles: [
     { models: declared(VIDEO_MODELS), schema: VIDEO_SCHEMA, examples: [{ label: "8s", facts: { seconds: 8 } }] },
-    { models: declared(IMAGE_MODELS), schema: IMAGE_SCHEMA, examples: [{ label: "1 image", facts: { image_count: 1 } }] },
+    { models: declared(IMAGE_MODELS).concat(SHARED_MODELS), schema: IMAGE_SCHEMA, examples: [{ label: "1 image", facts: { image_count: 1 } }] },
   ],
   protocols: [
     { name: "openai_video", models: declared(VIDEO_MODELS) },
-    { name: "openai_image", models: declared(IMAGE_MODELS) },
+    { name: "openai_image", models: declared(IMAGE_MODELS).concat(SHARED_MODELS) },
   ],
 };
 
@@ -63,7 +66,7 @@ function listOf(value) {
 // The executing gflow model, without the `gflow/` namespace.
 function modelOf(ctx) {
   for (const model of [ctx && ctx.upstreamModel, ctx && ctx.model].map(trimmed)) {
-    if (meta.models.includes(model)) return model.slice("gflow/".length);
+    if (meta.models.includes(model)) return model.replace(/^gflow\//, "");
   }
   throw new Error("model is not served by this channel");
 }

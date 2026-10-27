@@ -852,6 +852,66 @@
     }
    ],
    "expectedError": "omni-flash supports seconds 4, 6, 8, 10"
+  },
+  {
+   "name": "a shared public name runs as the gflow model",
+   "hook": "buildSubmitRequest",
+   "args": [
+    {
+     "model": "nano-banana-2",
+     "upstreamModel": "nano-banana-2",
+     "baseUrl": "https://gflow.internal:8000",
+     "apiKey": "k",
+     "requestBody": {
+      "prompt": "x"
+     }
+    }
+   ],
+   "expected": {
+    "url": "https://gflow.internal:8000/v1/tasks",
+    "method": "POST",
+    "headers": {
+     "Content-Type": "application/json",
+     "Accept": "application/json",
+     "Authorization": "Bearer k"
+    },
+    "body": {
+     "model": "nano-banana-2",
+     "prompt": "x",
+     "n": 1
+    },
+    "action": "text_to_image"
+   }
+  },
+  {
+   "name": "a shared name decodes on the images endpoint",
+   "hook": "protocols",
+   "path": [
+    "openai_image",
+    "decodeRequest"
+   ],
+   "args": [
+    {
+     "model": "nano-banana-pro",
+     "upstreamModel": "nano-banana-pro",
+     "operation": "generate",
+     "body": {
+      "kind": "json",
+      "value": {
+       "prompt": "x"
+      }
+     }
+    }
+   ],
+   "expected": {
+    "kind": "submit",
+    "model": "nano-banana-pro",
+    "action": "text_to_image",
+    "requestBody": {
+     "model": "nano-banana-pro",
+     "prompt": "x"
+    }
+   }
   }
  ]
 }
