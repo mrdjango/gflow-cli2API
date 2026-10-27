@@ -134,3 +134,14 @@ async def test_a_signed_content_url_is_its_own_credential(api: httpx.AsyncClient
         path, query = url.removeprefix("http://gflow").split("?")
         expired = query.replace(query.split("&")[0], "expires=1")
         assert (await anon.get(f"{path}?{expired}")).status_code == 401
+
+
+async def test_veo_never_pins_a_duration(api: httpx.AsyncClient, wired: dict[str, Any]) -> None:
+    bad = await api.post("/v1/tasks", json={"model": "veo-3.1-lite", "prompt": "a", "seconds": 4})
+    assert bad.status_code == 400
+    created = await api.post(
+        "/v1/tasks", json={"model": "veo-3.1-lite", "prompt": "a", "seconds": 8}
+    )
+    assert created.status_code == 202, created.text
+    await _finish(created.json()["id"])
+    assert wired["client"].generate_video.call_args.kwargs["req"].duration is None

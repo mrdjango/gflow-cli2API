@@ -37,8 +37,8 @@
    "hook": "buildSubmitRequest",
    "args": [
     {
-     "model": "veo-3.1-fast",
-     "upstreamModel": "gflow/veo-3.1-fast",
+     "model": "omni-flash",
+     "upstreamModel": "gflow/omni-flash",
      "baseUrl": "https://gflow.internal:8000/v1/",
      "apiKey": "k",
      "requestBody": {
@@ -56,7 +56,7 @@
      "Authorization": "Bearer k"
     },
     "body": {
-     "model": "veo-3.1-fast",
+     "model": "omni-flash",
      "prompt": "x",
      "seconds": 4
     },
@@ -74,7 +74,7 @@
      "apiKey": "k",
      "requestBody": {
       "prompt": "x",
-      "seconds": 6,
+      "seconds": 8,
       "images": [
        "https://cdn.example/a.png",
        "https://cdn.example/b.png"
@@ -93,7 +93,7 @@
     "body": {
      "model": "veo-3.1-quality",
      "prompt": "x",
-     "seconds": 6,
+     "seconds": 8,
      "images": [
       "https://cdn.example/a.png",
       "https://cdn.example/b.png"
@@ -154,7 +154,7 @@
    "expectedError": "reference-to-video needs at least one image"
   },
   {
-   "name": "unsupported seconds are rejected",
+   "name": "veo makes 8-second clips only",
    "hook": "buildSubmitRequest",
    "args": [
     {
@@ -164,11 +164,11 @@
      "apiKey": "k",
      "requestBody": {
       "prompt": "x",
-      "seconds": 5
+      "seconds": 4
      }
     }
    ],
-   "expectedError": "seconds must be one of 4, 6, 8, 10"
+   "expectedError": "veo-3.1-fast supports seconds 8"
   },
   {
    "name": "plain http images are rejected",
@@ -603,8 +603,8 @@
    "hook": "extractUsage",
    "args": [
     {
-     "model": "veo-3.1-fast",
-     "upstreamModel": "gflow/veo-3.1-fast",
+     "model": "omni-flash",
+     "upstreamModel": "gflow/omni-flash",
      "requestBody": {
       "prompt": "x",
       "duration": 10
@@ -673,8 +673,8 @@
    ],
    "args": [
     {
-     "model": "veo-3.1-fast",
-     "upstreamModel": "gflow/veo-3.1-fast",
+     "model": "omni-flash",
+     "upstreamModel": "gflow/omni-flash",
      "body": {
       "kind": "multipart",
       "fields": {
@@ -694,10 +694,10 @@
    ],
    "expected": {
     "kind": "submit",
-    "model": "veo-3.1-fast",
+    "model": "omni-flash",
     "action": "text_to_video",
     "requestBody": {
-     "model": "veo-3.1-fast",
+     "model": "omni-flash",
      "prompt": "x",
      "size": "720x1280",
      "seconds": 4
@@ -835,6 +835,23 @@
      }
     ]
    }
+  },
+  {
+   "name": "omni flash rejects an unsupported length",
+   "hook": "buildSubmitRequest",
+   "args": [
+    {
+     "model": "omni-flash",
+     "upstreamModel": "gflow/omni-flash",
+     "baseUrl": "https://gflow.internal:8000",
+     "apiKey": "k",
+     "requestBody": {
+      "prompt": "x",
+      "seconds": 5
+     }
+    }
+   ],
+   "expectedError": "omni-flash supports seconds 4, 6, 8, 10"
   }
  ]
 }

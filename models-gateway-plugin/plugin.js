@@ -9,7 +9,8 @@
 
 const VIDEO_MODELS = ["veo-3.1-fast", "veo-3.1-quality", "veo-3.1-lite", "veo-3.1-lite-lower-priority", "omni-flash"];
 const IMAGE_MODELS = ["nano-banana-2", "nano-banana-2-lite", "nano-banana-pro", "imagen-4"];
-const VIDEO_SECONDS = [4, 6, 8, 10];
+// Flow shows a duration control only for Omni Flash; Veo always makes 8-second clips.
+const OMNI_SECONDS = [4, 6, 8, 10];
 const MAX_IMAGES = 4;
 
 const IMAGE_UNIT_LABEL = { en: "image", zh: "张" };
@@ -29,7 +30,7 @@ export const meta = {
     en: "Veo video and Nano Banana / Imagen images through a gflow serve daemon",
     zh: "通过 gflow serve 守护进程使用 Veo 视频与 Nano Banana / Imagen 图片",
   },
-  version: "1.0.0",
+  version: "1.0.1",
   author: { name: "TensorGrid" },
   website: "https://github.com/mrdjango/gflow-cli2API",
   models: declared(VIDEO_MODELS).concat(declared(IMAGE_MODELS)),
@@ -101,7 +102,8 @@ function taskRequest(ctx) {
   }
   const raw = req.seconds !== undefined ? req.seconds : req.duration;
   const seconds = raw === undefined || raw === null || raw === "" ? 8 : Number(raw);
-  if (!VIDEO_SECONDS.includes(seconds)) throw new Error("seconds must be one of " + VIDEO_SECONDS.join(", "));
+  const allowed = model === "omni-flash" ? OMNI_SECONDS : [8];
+  if (!allowed.includes(seconds)) throw new Error(model + " supports seconds " + allowed.join(", "));
   body.seconds = seconds;
   if (has(req, "resolution")) body.resolution = req.resolution;
   // A public name saying "reference" asks for reference images; otherwise images are first/last frames.

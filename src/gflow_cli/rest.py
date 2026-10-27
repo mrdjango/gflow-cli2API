@@ -207,6 +207,13 @@ async def _submit(raw: Any, *, wait: bool) -> dict[str, Any]:
             wait=wait,
         )
     else:
+        seconds = _int(body, "seconds", _int(body, "duration", None))
+        # Flow shows a duration control only for Omni Flash; Veo always makes 8s clips,
+        # and pinning a duration there fails in the settings pane.
+        if alias != "omni_flash":
+            if seconds not in (None, 8):
+                raise ApiError(400, f"{model} makes 8-second clips only")
+            seconds = None
         mode = "t2v"
         if images:
             mode = "r2v" if str(body.get("mode") or "").lower() in ("r2v", "reference") else "i2v"
@@ -218,7 +225,7 @@ async def _submit(raw: Any, *, wait: bool) -> dict[str, Any]:
             end_frame=images[1] if mode == "i2v" and len(images) > 1 else None,
             reference_images=images if mode == "r2v" else None,
             model=alias,
-            duration=_int(body, "seconds", _int(body, "duration", None)),
+            duration=seconds,
             resolution=body.get("resolution"),
             count=_int(body, "n", 1) or 1,
             wait=wait,
