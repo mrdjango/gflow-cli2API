@@ -1,0 +1,840 @@
+{
+ "cases": [
+  {
+   "name": "veo text-to-video defaults to 8 seconds",
+   "hook": "buildSubmitRequest",
+   "args": [
+    {
+     "model": "veo-3.1-fast",
+     "upstreamModel": "gflow/veo-3.1-fast",
+     "baseUrl": "https://gflow.internal:8000",
+     "apiKey": "k",
+     "requestBody": {
+      "prompt": "a red cube",
+      "size": "1280x720"
+     }
+    }
+   ],
+   "expected": {
+    "url": "https://gflow.internal:8000/v1/tasks",
+    "method": "POST",
+    "headers": {
+     "Content-Type": "application/json",
+     "Accept": "application/json",
+     "Authorization": "Bearer k"
+    },
+    "body": {
+     "model": "veo-3.1-fast",
+     "prompt": "a red cube",
+     "size": "1280x720",
+     "seconds": 8
+    },
+    "action": "text_to_video"
+   }
+  },
+  {
+   "name": "a base URL ending in /v1 is accepted",
+   "hook": "buildSubmitRequest",
+   "args": [
+    {
+     "model": "veo-3.1-fast",
+     "upstreamModel": "gflow/veo-3.1-fast",
+     "baseUrl": "https://gflow.internal:8000/v1/",
+     "apiKey": "k",
+     "requestBody": {
+      "prompt": "x",
+      "seconds": 4
+     }
+    }
+   ],
+   "expected": {
+    "url": "https://gflow.internal:8000/v1/tasks",
+    "method": "POST",
+    "headers": {
+     "Content-Type": "application/json",
+     "Accept": "application/json",
+     "Authorization": "Bearer k"
+    },
+    "body": {
+     "model": "veo-3.1-fast",
+     "prompt": "x",
+     "seconds": 4
+    },
+    "action": "text_to_video"
+   }
+  },
+  {
+   "name": "two images are first and last frames",
+   "hook": "buildSubmitRequest",
+   "args": [
+    {
+     "model": "veo-3.1-quality",
+     "upstreamModel": "gflow/veo-3.1-quality",
+     "baseUrl": "https://gflow.internal:8000",
+     "apiKey": "k",
+     "requestBody": {
+      "prompt": "x",
+      "seconds": 6,
+      "images": [
+       "https://cdn.example/a.png",
+       "https://cdn.example/b.png"
+      ]
+     }
+    }
+   ],
+   "expected": {
+    "url": "https://gflow.internal:8000/v1/tasks",
+    "method": "POST",
+    "headers": {
+     "Content-Type": "application/json",
+     "Accept": "application/json",
+     "Authorization": "Bearer k"
+    },
+    "body": {
+     "model": "veo-3.1-quality",
+     "prompt": "x",
+     "seconds": 6,
+     "images": [
+      "https://cdn.example/a.png",
+      "https://cdn.example/b.png"
+     ]
+    },
+    "action": "image_to_video"
+   }
+  },
+  {
+   "name": "a public name saying reference sends reference images",
+   "hook": "buildSubmitRequest",
+   "args": [
+    {
+     "model": "veo-3.1-reference-to-video",
+     "upstreamModel": "gflow/veo-3.1-fast",
+     "baseUrl": "https://gflow.internal:8000",
+     "apiKey": "k",
+     "requestBody": {
+      "prompt": "x",
+      "image": "https://cdn.example/a.png"
+     }
+    }
+   ],
+   "expected": {
+    "url": "https://gflow.internal:8000/v1/tasks",
+    "method": "POST",
+    "headers": {
+     "Content-Type": "application/json",
+     "Accept": "application/json",
+     "Authorization": "Bearer k"
+    },
+    "body": {
+     "model": "veo-3.1-fast",
+     "prompt": "x",
+     "seconds": 8,
+     "images": [
+      "https://cdn.example/a.png"
+     ],
+     "mode": "reference"
+    },
+    "action": "reference_to_video"
+   }
+  },
+  {
+   "name": "reference-to-video without images is rejected",
+   "hook": "buildSubmitRequest",
+   "args": [
+    {
+     "model": "veo-3.1-reference-to-video",
+     "upstreamModel": "gflow/veo-3.1-fast",
+     "baseUrl": "https://gflow.internal:8000",
+     "apiKey": "k",
+     "requestBody": {
+      "prompt": "x"
+     }
+    }
+   ],
+   "expectedError": "reference-to-video needs at least one image"
+  },
+  {
+   "name": "unsupported seconds are rejected",
+   "hook": "buildSubmitRequest",
+   "args": [
+    {
+     "model": "veo-3.1-fast",
+     "upstreamModel": "gflow/veo-3.1-fast",
+     "baseUrl": "https://gflow.internal:8000",
+     "apiKey": "k",
+     "requestBody": {
+      "prompt": "x",
+      "seconds": 5
+     }
+    }
+   ],
+   "expectedError": "seconds must be one of 4, 6, 8, 10"
+  },
+  {
+   "name": "plain http images are rejected",
+   "hook": "buildSubmitRequest",
+   "args": [
+    {
+     "model": "nano-banana-2",
+     "upstreamModel": "gflow/nano-banana-2",
+     "baseUrl": "https://gflow.internal:8000",
+     "apiKey": "k",
+     "requestBody": {
+      "prompt": "x",
+      "image": "http://cdn.example/a.png"
+     }
+    }
+   ],
+   "expectedError": "reference images must be HTTPS URLs or base64 data URIs"
+  },
+  {
+   "name": "image request with two images",
+   "hook": "buildSubmitRequest",
+   "args": [
+    {
+     "model": "nano-banana-pro",
+     "upstreamModel": "gflow/nano-banana-pro",
+     "baseUrl": "https://gflow.internal:8000",
+     "apiKey": "k",
+     "requestBody": {
+      "prompt": "x",
+      "n": 2,
+      "size": "1024x1024"
+     }
+    }
+   ],
+   "expected": {
+    "url": "https://gflow.internal:8000/v1/tasks",
+    "method": "POST",
+    "headers": {
+     "Content-Type": "application/json",
+     "Accept": "application/json",
+     "Authorization": "Bearer k"
+    },
+    "body": {
+     "model": "nano-banana-pro",
+     "prompt": "x",
+     "size": "1024x1024",
+     "n": 2
+    },
+    "action": "text_to_image"
+   }
+  },
+  {
+   "name": "image edit sends a data URI reference",
+   "hook": "buildSubmitRequest",
+   "args": [
+    {
+     "model": "nano-banana-2",
+     "upstreamModel": "gflow/nano-banana-2",
+     "baseUrl": "https://gflow.internal:8000",
+     "apiKey": "k",
+     "requestBody": {
+      "prompt": "x",
+      "image": [
+       "data:image/png;base64,AAAA"
+      ]
+     }
+    }
+   ],
+   "expected": {
+    "url": "https://gflow.internal:8000/v1/tasks",
+    "method": "POST",
+    "headers": {
+     "Content-Type": "application/json",
+     "Accept": "application/json",
+     "Authorization": "Bearer k"
+    },
+    "body": {
+     "model": "nano-banana-2",
+     "prompt": "x",
+     "n": 1,
+     "images": [
+      "data:image/png;base64,AAAA"
+     ]
+    },
+    "action": "image_to_image"
+   }
+  },
+  {
+   "name": "more than four images is rejected",
+   "hook": "buildSubmitRequest",
+   "args": [
+    {
+     "model": "nano-banana-2",
+     "upstreamModel": "gflow/nano-banana-2",
+     "baseUrl": "https://gflow.internal:8000",
+     "apiKey": "k",
+     "requestBody": {
+      "prompt": "x",
+      "n": 5
+     }
+    }
+   ],
+   "expectedError": "n must be an integer between 1 and 4"
+  },
+  {
+   "name": "an unmapped model is rejected",
+   "hook": "buildSubmitRequest",
+   "args": [
+    {
+     "model": "sora-2",
+     "upstreamModel": "sora-2",
+     "baseUrl": "https://gflow.internal:8000",
+     "apiKey": "k",
+     "requestBody": {
+      "prompt": "x"
+     }
+    }
+   ],
+   "expectedError": "model is not served by this channel"
+  },
+  {
+   "name": "submit response carries the task id",
+   "hook": "parseSubmitResponse",
+   "args": [
+    {
+     "model": "gflow/nano-banana-2"
+    },
+    {
+     "statusCode": 202,
+     "headers": {},
+     "body": {
+      "id": "t1",
+      "status": "queued",
+      "outputs": []
+     }
+    }
+   ],
+   "expected": {
+    "taskId": "t1",
+    "taskData": {
+     "id": "t1",
+     "status": "queued",
+     "outputs": []
+    }
+   }
+  },
+  {
+   "name": "query request",
+   "hook": "buildQueryRequest",
+   "args": [
+    {
+     "baseUrl": "https://gflow.internal:8000",
+     "apiKey": "k",
+     "taskId": "t1"
+    }
+   ],
+   "expected": {
+    "url": "https://gflow.internal:8000/v1/tasks/t1",
+    "method": "GET",
+    "headers": {
+     "Content-Type": "application/json",
+     "Accept": "application/json",
+     "Authorization": "Bearer k"
+    }
+   }
+  },
+  {
+   "name": "queued task",
+   "hook": "parseTaskResult",
+   "args": [
+    {},
+    {
+     "id": "t1",
+     "status": "queued",
+     "outputs": []
+    },
+    {
+     "status": 200,
+     "headers": {}
+    }
+   ],
+   "expected": {
+    "status": "QUEUED",
+    "progress": "10%"
+   }
+  },
+  {
+   "name": "running task",
+   "hook": "parseTaskResult",
+   "args": [
+    {},
+    {
+     "id": "t1",
+     "status": "in_progress",
+     "outputs": []
+    },
+    {
+     "status": 200,
+     "headers": {}
+    }
+   ],
+   "expected": {
+    "status": "IN_PROGRESS",
+    "progress": "50%"
+   }
+  },
+  {
+   "name": "completed task",
+   "hook": "parseTaskResult",
+   "args": [
+    {},
+    {
+     "id": "t1",
+     "status": "completed",
+     "outputs": [
+      {
+       "index": 0,
+       "type": "video",
+       "url": "https://gflow.internal:8000/v1/tasks/t1/content/0?expires=1&sig=x"
+      }
+     ]
+    },
+    {
+     "status": 200,
+     "headers": {}
+    }
+   ],
+   "expected": {
+    "status": "SUCCESS",
+    "progress": "100%"
+   }
+  },
+  {
+   "name": "completed without output fails",
+   "hook": "parseTaskResult",
+   "args": [
+    {},
+    {
+     "id": "t1",
+     "status": "completed",
+     "outputs": []
+    },
+    {
+     "status": 200,
+     "headers": {}
+    }
+   ],
+   "expected": {
+    "status": "FAILURE",
+    "progress": "100%",
+    "reason": "The model provider finished without an output"
+   }
+  },
+  {
+   "name": "failed task keeps the message",
+   "hook": "parseTaskResult",
+   "args": [
+    {},
+    {
+     "id": "t1",
+     "status": "failed",
+     "outputs": [],
+     "error": {
+      "code": "generation_failed",
+      "message": "prompt refused"
+     }
+    },
+    {
+     "status": 200,
+     "headers": {}
+    }
+   ],
+   "expected": {
+    "status": "FAILURE",
+    "progress": "100%",
+    "reason": "prompt refused"
+   }
+  },
+  {
+   "name": "unknown status",
+   "hook": "parseTaskResult",
+   "args": [
+    {},
+    {
+     "id": "t1",
+     "status": "weird"
+    },
+    {
+     "status": 200,
+     "headers": {}
+    }
+   ],
+   "expected": {
+    "status": "UNKNOWN",
+    "reason": "unrecognized status: weird"
+   }
+  },
+  {
+   "name": "video artifact",
+   "hook": "listArtifacts",
+   "args": [
+    {
+     "taskId": "t1",
+     "status": "SUCCESS",
+     "action": "text_to_video",
+     "producerVersion": "1.0.0",
+     "data": {
+      "id": "t1",
+      "status": "completed",
+      "outputs": [
+       {
+        "index": 0,
+        "type": "video",
+        "url": "https://gflow.internal:8000/v1/tasks/t1/content/0?expires=1&sig=x"
+       }
+      ]
+     }
+    }
+   ],
+   "expected": [
+    {
+     "key": "video",
+     "type": "video",
+     "mimeType": "video/mp4"
+    }
+   ]
+  },
+  {
+   "name": "image artifacts",
+   "hook": "listArtifacts",
+   "args": [
+    {
+     "taskId": "t1",
+     "status": "SUCCESS",
+     "action": "text_to_image",
+     "producerVersion": "1.0.0",
+     "data": {
+      "id": "t1",
+      "status": "completed",
+      "outputs": [
+       {
+        "index": 0,
+        "type": "image",
+        "url": "https://gflow.internal:8000/v1/tasks/t1/content/0?expires=1&sig=x"
+       },
+       {
+        "index": 1,
+        "type": "image",
+        "url": "https://gflow.internal:8000/v1/tasks/t1/content/1?expires=1&sig=x"
+       }
+      ]
+     }
+    }
+   ],
+   "expected": [
+    {
+     "key": "image-1",
+     "type": "image"
+    },
+    {
+     "key": "image-2",
+     "type": "image"
+    }
+   ]
+  },
+  {
+   "name": "second image is fetched from its signed URL",
+   "hook": "buildContentRequest",
+   "args": [
+    {
+     "artifactKey": "image-2",
+     "clientRequest": {
+      "method": "GET",
+      "headers": {}
+     },
+     "data": {
+      "id": "t1",
+      "status": "completed",
+      "outputs": [
+       {
+        "index": 0,
+        "type": "image",
+        "url": "https://gflow.internal:8000/v1/tasks/t1/content/0?expires=1&sig=x"
+       },
+       {
+        "index": 1,
+        "type": "image",
+        "url": "https://gflow.internal:8000/v1/tasks/t1/content/1?expires=1&sig=x"
+       }
+      ]
+     }
+    }
+   ],
+   "expected": {
+    "url": "https://gflow.internal:8000/v1/tasks/t1/content/1?expires=1&sig=x",
+    "method": "GET",
+    "credentialless": true
+   }
+  },
+  {
+   "name": "a missing artifact is reported",
+   "hook": "buildContentRequest",
+   "args": [
+    {
+     "artifactKey": "video",
+     "clientRequest": {
+      "method": "GET",
+      "headers": {}
+     },
+     "data": {
+      "id": "t1",
+      "status": "completed",
+      "outputs": [
+       {
+        "index": 0,
+        "type": "image",
+        "url": "https://gflow.internal:8000/v1/tasks/t1/content/0?expires=1&sig=x"
+       },
+       {
+        "index": 1,
+        "type": "image",
+        "url": "https://gflow.internal:8000/v1/tasks/t1/content/1?expires=1&sig=x"
+       }
+      ]
+     }
+    }
+   ],
+   "expectedError": "artifact_not_found"
+  },
+  {
+   "name": "video usage reads seconds",
+   "hook": "extractUsage",
+   "args": [
+    {
+     "model": "veo-3.1-fast",
+     "upstreamModel": "gflow/veo-3.1-fast",
+     "requestBody": {
+      "prompt": "x",
+      "duration": 10
+     }
+    }
+   ],
+   "expected": {
+    "seconds": 10
+   }
+  },
+  {
+   "name": "image usage reads n",
+   "hook": "extractUsage",
+   "args": [
+    {
+     "model": "nano-banana-2",
+     "upstreamModel": "gflow/nano-banana-2",
+     "requestBody": {
+      "prompt": "x",
+      "n": 3
+     }
+    }
+   ],
+   "expected": {
+    "image_count": 3
+   }
+  },
+  {
+   "name": "completion settles the delivered image count",
+   "hook": "extractUsageOnComplete",
+   "args": [
+    {
+     "model": "gflow/nano-banana-2",
+     "upstreamModel": "gflow/nano-banana-2"
+    },
+    {
+     "status": "SUCCESS"
+    },
+    {
+     "id": "t1",
+     "status": "completed",
+     "outputs": [
+      {
+       "index": 0,
+       "type": "image",
+       "url": "https://gflow.internal:8000/v1/tasks/t1/content/0?expires=1&sig=x"
+      },
+      {
+       "index": 1,
+       "type": "image",
+       "url": "https://gflow.internal:8000/v1/tasks/t1/content/1?expires=1&sig=x"
+      }
+     ]
+    }
+   ],
+   "expected": {
+    "image_count": 2
+   }
+  },
+  {
+   "name": "openai video multipart decodes",
+   "hook": "protocols",
+   "path": [
+    "openai_video",
+    "decodeRequest"
+   ],
+   "args": [
+    {
+     "model": "veo-3.1-fast",
+     "upstreamModel": "gflow/veo-3.1-fast",
+     "body": {
+      "kind": "multipart",
+      "fields": {
+       "prompt": [
+        "x"
+       ],
+       "seconds": [
+        "4"
+       ],
+       "size": [
+        "720x1280"
+       ]
+      },
+      "files": []
+     }
+    }
+   ],
+   "expected": {
+    "kind": "submit",
+    "model": "veo-3.1-fast",
+    "action": "text_to_video",
+    "requestBody": {
+     "model": "veo-3.1-fast",
+     "prompt": "x",
+     "size": "720x1280",
+     "seconds": 4
+    }
+   }
+  },
+  {
+   "name": "uploaded files are refused",
+   "hook": "protocols",
+   "path": [
+    "openai_video",
+    "decodeRequest"
+   ],
+   "args": [
+    {
+     "model": "veo-3.1-fast",
+     "upstreamModel": "gflow/veo-3.1-fast",
+     "body": {
+      "kind": "multipart",
+      "fields": {
+       "prompt": [
+        "x"
+       ]
+      },
+      "files": [
+       {
+        "field": "input_reference",
+        "ref": "f1",
+        "filename": "a.png"
+       }
+      ]
+     }
+    }
+   ],
+   "expectedError": "pass reference images as HTTPS URLs or data URIs, not file uploads"
+  },
+  {
+   "name": "image edit needs an image",
+   "hook": "protocols",
+   "path": [
+    "openai_image",
+    "decodeRequest"
+   ],
+   "args": [
+    {
+     "model": "nano-banana-2",
+     "upstreamModel": "gflow/nano-banana-2",
+     "operation": "edit",
+     "body": {
+      "kind": "json",
+      "value": {
+       "prompt": "x"
+      }
+     }
+    }
+   ],
+   "expectedError": "image is required"
+  },
+  {
+   "name": "image generate decodes",
+   "hook": "protocols",
+   "path": [
+    "openai_image",
+    "decodeRequest"
+   ],
+   "args": [
+    {
+     "model": "nano-banana-2",
+     "upstreamModel": "gflow/nano-banana-2",
+     "operation": "generate",
+     "body": {
+      "kind": "json",
+      "value": {
+       "prompt": "x",
+       "n": 1,
+       "size": "1024x1024",
+       "response_format": "b64_json"
+      }
+     }
+    }
+   ],
+   "expected": {
+    "kind": "submit",
+    "model": "nano-banana-2",
+    "action": "text_to_image",
+    "requestBody": {
+     "model": "nano-banana-2",
+     "prompt": "x",
+     "size": "1024x1024",
+     "n": 1
+    }
+   }
+  },
+  {
+   "name": "image render answers the signed URLs",
+   "hook": "protocols",
+   "path": [
+    "openai_image",
+    "render"
+   ],
+   "args": [
+    {
+     "model": "nano-banana-2"
+    },
+    {
+     "task_id": "task_x",
+     "status": "SUCCESS",
+     "created_at": 100,
+     "data": {
+      "id": "t1",
+      "status": "completed",
+      "outputs": [
+       {
+        "index": 0,
+        "type": "image",
+        "url": "https://gflow.internal:8000/v1/tasks/t1/content/0?expires=1&sig=x"
+       },
+       {
+        "index": 1,
+        "type": "image",
+        "url": "https://gflow.internal:8000/v1/tasks/t1/content/1?expires=1&sig=x"
+       }
+      ]
+     }
+    }
+   ],
+   "expected": {
+    "created": 100,
+    "data": [
+     {
+      "url": "https://gflow.internal:8000/v1/tasks/t1/content/0?expires=1&sig=x"
+     },
+     {
+      "url": "https://gflow.internal:8000/v1/tasks/t1/content/1?expires=1&sig=x"
+     }
+    ]
+   }
+  }
+ ]
+}

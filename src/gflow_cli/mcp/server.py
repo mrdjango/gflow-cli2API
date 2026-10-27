@@ -231,6 +231,12 @@ class _BearerAuthMiddleware:
         if scope["type"] != "http":
             await self._app(scope, receive, send)
             return
+        from gflow_cli import rest
+
+        # A signed task-content URL is its own credential (gateways hand it to clients).
+        if rest.has_valid_signature(scope["path"], scope.get("query_string", b"").decode()):
+            await self._app(scope, receive, send)
+            return
         scheme, _, presented = Headers(scope=scope).get("authorization", "").partition(" ")
         # RFC 9110: the auth scheme is case-insensitive. ``compare_digest`` is
         # reached through the module so the comparison stays constant-time and
@@ -278,6 +284,10 @@ def build_app(
         if transport == "http"
         else server.sse_app(host=host)
     )
+    if transport == "http":
+        from gflow_cli import rest
+
+        app.router.routes.extend(rest.routes)
     if token is not None:
         # Added LAST on purpose: ``add_middleware`` inserts at index 0, so the
         # last layer added is the outermost one. Auth must answer before the
